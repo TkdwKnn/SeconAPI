@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SeconAPI.Api.Contracts;
 using SeconAPI.Api.Filters;
@@ -162,7 +163,8 @@ public class DocumentsController : ControllerBase
     }
     
     
-    
+    [RequestFormLimits(ValueLengthLimit = int.MaxValue, MultipartBodyLengthLimit = int.MaxValue)]
+    [DisableRequestSizeLimit]
     [HttpPost("process")]
     [UserAuthorize]
     public async Task<IActionResult> ProcessTask()
@@ -238,6 +240,29 @@ public class DocumentsController : ControllerBase
             return StatusCode(500, $"Internal server error: {ex.Message}");
         }
     }
+
+
+    [HttpGet("proccessed/{userId}")]
+    [AdminAuthorize]
+    public async Task<IActionResult> ProcessTaskByUserId(int userId)
+    {
+        var processes = await _documentService.GetProcessingTasksByUserIdAsync(userId);
+        return Ok(processes);
+    }
     
     
+    [HttpGet("proccessed/my")]
+    [AdminAuthorize]
+    public async Task<IActionResult> ProcessTaskForUser()
+    {
+        
+        var token = Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
+        var user = await _authService.GetUserFromTokenAsync(token);
+        
+        var processes = await _documentService.GetProcessingTasksByUserIdAsync(user.Id);
+        return Ok(processes);
+    }
+
+
+
 }

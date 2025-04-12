@@ -16,5 +16,8 @@ public interface IDocumentService
     Task<byte[]> DownloadArchiveByIdAsync(int archiveId);
     
     Task<byte[]> DownloadArchiveByTaskIdAsync(int taskId);
-    
+
+    Task<IEnumerable<ProcessingTask>> GetProcessingTasksByUserIdAsync(int userId);
+
+
 }

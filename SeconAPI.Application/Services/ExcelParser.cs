@@ -1,4 +1,6 @@
+using System.Drawing;
 using OfficeOpenXml;
+using OfficeOpenXml.Style;
 using SeconAPI.Application.Interfaces.Services;
 using SeconAPI.Domain.Entities;
 
@@ -72,5 +74,61 @@ public class ExcelParser : IExcelParser
         }
         
         return meterDatas;
+    }
+    
+    
+    
+    public async Task<byte[]> EditExcelReportAsync(byte[] excelData, List<MeterData> allMeterData)
+    {
+        using var package = new ExcelPackage(new MemoryStream(excelData));
+    
+        foreach (var worksheet in package.Workbook.Worksheets)
+        {
+            var meterNumberCol = GetColumnIndex(worksheet, "MeterNumber");
+            var meterTypeCol = GetColumnIndex(worksheet, "MeterType");
+        
+            if (meterNumberCol == -1 || meterTypeCol == -1) continue;
+
+            for (int row = 2; row <= worksheet.Dimension.End.Row; row++)
+            {
+                var currentNumber = worksheet.Cells[row, meterNumberCol].Text;
+                var currentType = worksheet.Cells[row, meterTypeCol].Text;
+
+                var meter = allMeterData.FirstOrDefault(m => 
+                    m.MeterNumber == currentNumber && 
+                    m.MeterType == currentType);
+
+                if (meter != null && !meter.IsMatched)
+                {
+                    SetRedBackground(worksheet.Cells[row, meterNumberCol]);
+                    SetRedBackground(worksheet.Cells[row, meterTypeCol]);
+                }
+            }
+        }
+    
+        return package.GetAsByteArray();
+    }
+
+    private void SetRedBackground(ExcelRange cell)
+    {
+        cell.Style.Fill.PatternType = ExcelFillStyle.Solid;
+        cell.Style.Fill.BackgroundColor.SetColor(Color.Red);
+        cell.Style.Font.Bold = true;
+    }
+    
+    
+    
+    
+    
+    
+
+    private int GetColumnIndex(ExcelWorksheet worksheet, string columnName)
+    {
+        for (int col = 1; col <= worksheet.Dimension.End.Column; col++)
+        {
+            if (worksheet.Cells[1, col].Text.Equals(columnName, StringComparison.OrdinalIgnoreCase))
+                return col;
+        }
+        return -1;
     }
 }

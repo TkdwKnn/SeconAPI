@@ -61,4 +61,6 @@ public class ProcessingTaskRepository : IProcessingTaskRepository
         using var connection = _context.CreateConnection();
         await connection.ExecuteAsync(query, new { Id = taskId });
     }
+    
+
 }
