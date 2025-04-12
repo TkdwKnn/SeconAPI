@@ -12,4 +12,9 @@ public interface IDocumentService
     Task<List<Document>> GetAllDocumentsAsync();
     
     Task DeleteDocumentAsync(int documentId);
+    
+    Task<byte[]> DownloadArchiveByIdAsync(int archiveId);
+    
+    Task<byte[]> DownloadArchiveByTaskIdAsync(int taskId);
+    
 }

@@ -62,3 +62,14 @@ VALUES (
     'ZJqQnRVDlfRQJFKlLGnMOYWYsnXYbWYAHoUxjwTwjaI=', -- sample salt
     'Admin'
 );
+
+-- Create archive_files table
+CREATE TABLE IF NOT EXISTS archive_files (
+    id SERIAL PRIMARY KEY,
+    task_id INTEGER NOT NULL REFERENCES processing_tasks(id) ON DELETE CASCADE,
+    archive_data BYTEA NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+-- Создаем индекс для связи с задачами
+CREATE INDEX idx_archive_files_task_id ON archive_files(task_id);

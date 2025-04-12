@@ -11,17 +11,17 @@ namespace SeconAPI.Application.Services;
 public class DocumentService : IDocumentService
 {
     private readonly IDocumentRepository _documentRepository;
-    private static readonly string? PythonServiceUri = Environment.GetEnvironmentVariable("PythonServiceUri") ?? "http://127.0.0.1:5000/process";
+    private static readonly string? PythonServiceUri = Environment.GetEnvironmentVariable("PythonServiceUri") ?? "http://127.0.0.1:5000";
     private readonly IProcessingTaskRepository _processingTaskRepository;
     private readonly IExcelParser _excelParser;
-    private readonly IStorageService _storageService;
+    private readonly IArchiveRepository _archiveRepository;
     
-    public DocumentService(IDocumentRepository documentRepository, IExcelParser excelParser, IProcessingTaskRepository processingTaskRepository, IStorageService storageService)
+    public DocumentService(IDocumentRepository documentRepository, IExcelParser excelParser, IProcessingTaskRepository processingTaskRepository, IStorageService storageService, IArchiveRepository archiveRepository)
     {
         _documentRepository = documentRepository;
         _excelParser = excelParser;
         _processingTaskRepository = processingTaskRepository;
-        _storageService = storageService;
+        _archiveRepository = archiveRepository;
     }
     
     public async Task<int> ProcessImageAsync(byte[] image, int userId)
@@ -49,59 +49,87 @@ public class DocumentService : IDocumentService
         return await _documentRepository.AddDocumentAsync(document);
     }
 
+    
+    
+   
     public async Task<ProcessingTask> ProcessReportAsync(int userId, List<byte[]> excelReport, List<byte[]> imageDataList)
     {
         var task = new ProcessingTask
         {
             UserId = userId,
             CreatedAt = DateTime.UtcNow,
-            Status  = "Pending"
+            Status = "Pending"
         };
-        
+
         task.Id = await _processingTaskRepository.CreateTaskAsync(task);
 
         var meterDataList = await _excelParser.GetMeterDataByDocumentAsync(excelReport);
-    
         var processedImages = new List<(byte[] imageData, string newPath)>();
-    
-        var recognitionTasks =
-            imageDataList.Select(imageData => RecognizeMeterNumberFromImageAsync(imageData)).ToList();
+        int unmatchedCounter = 1;
 
-        
-        var serialNumbers = await Task.WhenAll(recognitionTasks);
-    
-        
-        for (var i = 0; i < imageDataList.Count; i++)
+        foreach (var imageData in imageDataList)
         {
-            var serialNumber = serialNumbers[i];
-            var matchedMeter = meterDataList.FirstOrDefault(m => m.MeterNumber == serialNumber);
-        
-            if (matchedMeter != null)
+            try
             {
-                matchedMeter.IsMatched = true;
-            
-                var relativePath = BuildRelativePath(matchedMeter);
-                var newFileName = matchedMeter.GetNewFileName() + ".jpg"; 
-                var fullPath = Path.Combine(relativePath, newFileName);
-            
-                processedImages.Add((imageDataList[i], fullPath));
+                var serialNumber = await RecognizeMeterNumberFromImageAsync(imageData);
+                var matchedMeter = meterDataList.FirstOrDefault(m => m.MeterNumber == serialNumber);
+
+                if (matchedMeter != null)
+                {
+                    Console.WriteLine($"Found meter number {matchedMeter.MeterNumber}");
+                    matchedMeter.IsMatched = true;
+                    var relativePath = BuildRelativePath(matchedMeter);
+                    var newFileName = matchedMeter.GetNewFileName() + ".jpg";
+                    var fullPath = Path.Combine(relativePath, newFileName);
+                    processedImages.Add((imageData, fullPath));
+                }
+                else
+                {
+                    var newFileName = $"{unmatchedCounter}.jpg";
+                    processedImages.Add((imageData, newFileName));
+                    unmatchedCounter++;
+                }
+
+            }
+            catch (Exception ex)
+            {
+                var errorFileName = $"error_{unmatchedCounter}.jpg";
+                processedImages.Add((imageData, errorFileName));
+                unmatchedCounter++;
+                Console.WriteLine($"Error processing image: {ex.Message}");
             }
         }
-    
-        var zipArchiveBytes = CreateZipArchive(processedImages);
-        
-        
-        
-        Stream stream = new MemoryStream(zipArchiveBytes);
 
-        var zipPath = await _storageService.UploadFileAsync("secon-api", task.CreatedAt + "zip", stream, "zip" );
-        
+        var zipArchiveBytes = CreateZipArchive(processedImages);
+
+        var zipPath = await _archiveRepository.SaveArchiveAsync(task.Id, zipArchiveBytes);
+
         task.Status = "Completed";
-        
-        task.ResultArchiveFileName =  zipPath;
+        task.ResultArchiveFileName = zipPath.ToString();
+        await _processingTaskRepository.UpdateTaskAsync(task);
 
         return task;
     }
+    
+    
+    
+
+    private async Task<string> RecognizeMeterNumberFromImageAsync(byte[] imageData)
+    {
+        using var httpClient = new HttpClient();
+        string base64Image = Convert.ToBase64String(imageData);
+
+        var jsonRequest = new { image = base64Image };
+        var jsonContent = JsonSerializer.Serialize(jsonRequest);
+        var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+
+        var response = await httpClient.PostAsync($"{PythonServiceUri}/recognize", content);
+        response.EnsureSuccessStatusCode();
+
+    
+        return await response.Content.ReadAsStringAsync();
+    }
+    
 
     public async Task<Document> GetDocumentByIdAsync(int documentId)
     {
@@ -162,26 +190,15 @@ public class DocumentService : IDocumentService
     }
     
     
-    private async Task<string> RecognizeMeterNumberFromImageAsync(byte[] imageData)
+    public async Task<byte[]> DownloadArchiveByIdAsync(int archiveId)
     {
-        using var httpClient = new HttpClient();
-        string base64Image = Convert.ToBase64String(imageData);
-        
-        var jsonRequest = new
-        {
-            image = base64Image
-        };
-
-        var jsonContent = JsonSerializer.Serialize(jsonRequest);
-        var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
-        
-        var response = await httpClient.PostAsync("http://127.0.0.1:5000/recognize", content);
-        response.EnsureSuccessStatusCode();
-        
-        return await response.Content.ReadAsStringAsync();
+        return await _archiveRepository.GetArchiveByIdAsync(archiveId);
     }
-    
-    
+
+    public async Task<byte[]> DownloadArchiveByTaskIdAsync(int taskId)
+    {
+        return await _archiveRepository.GetArchiveByTaskIdAsync(taskId);
+    }
     
     
 }

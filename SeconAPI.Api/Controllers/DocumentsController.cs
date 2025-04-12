@@ -139,23 +139,15 @@ public class DocumentsController : ControllerBase
     public async Task<IActionResult> UploadFiles()
     {
         var files = Request.Form.Files;
-        var excelFile = files.FirstOrDefault(f => f.ContentType == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        var excelFiles = files.Where(f => f.ContentType == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         var images = files.Where(f => f.ContentType.StartsWith("image/")).ToList();
 
-        if (excelFile == null)
-        {
-            return BadRequest("Excel-файл обязателен.");
-        }
+        
 
-        byte[] excelData;
-        using (var memoryStream = new MemoryStream())
-        {
-            await excelFile.CopyToAsync(memoryStream);
-            excelData = memoryStream.ToArray();
-        }
+        
 
         var imageDataList = new List<byte[]>();
-        foreach (var image in images)
+        foreach (var image in excelFiles)
         {
             using (var memoryStream = new MemoryStream())
             {
@@ -164,7 +156,7 @@ public class DocumentsController : ControllerBase
             }
         }
 
-        var result = await _excelParser.GetMeterDataByDocumentAsync(excelData);
+        var result = await _excelParser.GetMeterDataByDocumentAsync(imageDataList);
 
         return Ok(result);
     }
@@ -208,6 +200,43 @@ public class DocumentsController : ControllerBase
         var result = await _documentService.ProcessReportAsync(user.Id, excelData, imageDataList);
         
         return Ok(result);
+    }
+    
+    [HttpGet("archive/{archiveId}")]
+    public async Task<IActionResult> DownloadArchiveById(int archiveId)
+    {
+        try
+        {
+            var archiveBytes = await _documentService.DownloadArchiveByIdAsync(archiveId);
+            
+            if (archiveBytes == null || archiveBytes.Length == 0)
+                return NotFound("Archive not found");
+
+            return File(archiveBytes, "application/zip", $"archive_{archiveId}.zip");
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"Internal server error: {ex.Message}");
+        }
+    }
+    
+    
+    [HttpGet("task/{taskId}")]
+    public async Task<IActionResult> DownloadArchiveByTaskId(int taskId)
+    {
+        try
+        {
+            var archiveBytes = await _documentService.DownloadArchiveByTaskIdAsync(taskId);
+            
+            if (archiveBytes == null || archiveBytes.Length == 0)
+                return NotFound("Archive not found for this task");
+
+            return File(archiveBytes, "application/zip", $"task_{taskId}_archive.zip");
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"Internal server error: {ex.Message}");
+        }
     }
     
     

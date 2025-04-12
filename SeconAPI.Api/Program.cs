@@ -70,6 +70,7 @@ builder.Services.AddSingleton<DapperContext>();
 builder.Services.AddAuthentication("Custom")
     .AddScheme<AuthenticationSchemeOptions, SeconAuthenticationHandler>("Custom", null);
 builder.Services.AddAuthorization();
+builder.Services.AddScoped<IArchiveRepository, ArchiveRepository>();
 
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IDocumentRepository, DocumentRepository>();
