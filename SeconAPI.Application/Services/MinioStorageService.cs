@@ -10,7 +10,7 @@ public class MinioStorageService : IStorageService
 {
     private readonly IMinioClient _minioClient;
     private readonly ILogger<MinioStorageService> _logger;
-
+    
     public MinioStorageService(IMinioClient minioClient, ILogger<MinioStorageService> logger)
     {
         _minioClient = minioClient;

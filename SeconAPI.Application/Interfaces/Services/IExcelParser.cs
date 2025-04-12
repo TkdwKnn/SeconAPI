@@ -5,5 +5,6 @@ namespace SeconAPI.Application.Interfaces.Services;
 public interface IExcelParser
 {
     Task<List<MeterData>> GetMeterDataByDocumentAsync(byte[] excelReport);
-    
+    Task<List<MeterData>> GetMeterDataByDocumentAsync(List<byte[]> excelReport);
+
 }

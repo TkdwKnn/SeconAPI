@@ -1,3 +1,5 @@
+using System.IO.Compression;
+using System.Net.Http.Headers;
 using SeconAPI.Application.Interfaces.Repositories;
 using SeconAPI.Application.Interfaces.Services;
 using SeconAPI.Domain.Entities;
@@ -8,11 +10,16 @@ public class DocumentService : IDocumentService
 {
     private readonly IDocumentRepository _documentRepository;
     private static readonly string? PythonServiceUri = Environment.GetEnvironmentVariable("PythonServiceUri") ?? "http://127.0.0.1:5000/process";
+    private readonly IProcessingTaskRepository _processingTaskRepository;
+    private readonly IExcelParser _excelParser;
+    private readonly IStorageService _storageService;
     
-    
-    public DocumentService(IDocumentRepository documentRepository)
+    public DocumentService(IDocumentRepository documentRepository, IExcelParser excelParser, IProcessingTaskRepository processingTaskRepository, IStorageService storageService)
     {
         _documentRepository = documentRepository;
+        _excelParser = excelParser;
+        _processingTaskRepository = processingTaskRepository;
+        _storageService = storageService;
     }
     
     public async Task<int> ProcessImageAsync(byte[] image, int userId)
@@ -40,9 +47,57 @@ public class DocumentService : IDocumentService
         return await _documentRepository.AddDocumentAsync(document);
     }
 
-    public Task<ProcessingTask> ProcessReportAsync(byte[] excelReport, List<byte[]> imageDataList)
+    public async Task<ProcessingTask> ProcessReportAsync(int userId, List<byte[]> excelReport, List<byte[]> imageDataList)
     {
-        throw new NotImplementedException();
+        var task = new ProcessingTask
+        {
+            UserId = userId,
+            CreatedAt = DateTime.UtcNow,
+            Status  = "Pending"
+        };
+        
+        await _processingTaskRepository.CreateTaskAsync(task);
+
+        var meterDataList = await _excelParser.GetMeterDataByDocumentAsync(excelReport);
+    
+        var processedImages = new List<(byte[] imageData, string newPath)>();
+    
+        var recognitionTasks =
+            imageDataList.Select(imageData => RecognizeMeterNumberFromImageAsync(imageData)).ToList();
+
+        
+        var serialNumbers = await Task.WhenAll(recognitionTasks);
+    
+        
+        for (var i = 0; i < imageDataList.Count; i++)
+        {
+            var serialNumber = serialNumbers[i];
+            var matchedMeter = meterDataList.FirstOrDefault(m => m.MeterNumber == serialNumber);
+        
+            if (matchedMeter != null)
+            {
+                matchedMeter.IsMatched = true;
+            
+                var relativePath = BuildRelativePath(matchedMeter);
+                var newFileName = matchedMeter.GetNewFileName() + ".jpg"; 
+                var fullPath = Path.Combine(relativePath, newFileName);
+            
+                processedImages.Add((imageDataList[i], fullPath));
+            }
+        }
+    
+        var zipArchiveBytes = CreateZipArchive(processedImages);
+        
+        
+        Stream stream = new MemoryStream(zipArchiveBytes);
+
+        var zipPath = await _storageService.UploadFileAsync("secon-api", task.CreatedAt + "zip", stream, "zip" );
+        
+        task.Status = "Completed";
+        
+        task.ResultArchiveFileName =  zipPath;
+
+        return task;
     }
 
     public async Task<Document> GetDocumentByIdAsync(int documentId)
@@ -66,6 +121,59 @@ public class DocumentService : IDocumentService
     {
         await _documentRepository.DeleteDocumentAsync(documentId);
     }
+    
+    
+    private static string BuildRelativePath(MeterData meterData)
+    {
+        var pathParts = new List<string>();
+    
+        if (!string.IsNullOrEmpty(meterData.City))
+            pathParts.Add(meterData.City);
+        
+        if (!string.IsNullOrEmpty(meterData.Street))
+            pathParts.Add(meterData.Street);
+        
+        if (!string.IsNullOrEmpty(meterData.Building))
+            pathParts.Add(meterData.Building);
+        
+        if (!string.IsNullOrEmpty(meterData.Apartment))
+            pathParts.Add(meterData.Apartment);
+        
+        return Path.Combine(pathParts.ToArray());
+    }
+
+    private static byte[] CreateZipArchive(List<(byte[] imageData, string path)> processedImages)
+    {
+        using var memoryStream = new MemoryStream();
+        using (var archive = new ZipArchive(memoryStream, ZipArchiveMode.Create, true))
+        {
+            foreach (var (imageData, path) in processedImages)
+            {
+                var entry = archive.CreateEntry(path, CompressionLevel.Optimal);
+                using var entryStream = entry.Open();
+                entryStream.Write(imageData, 0, imageData.Length);
+            }
+        }
+        
+        return memoryStream.ToArray();
+    }
+    
+    
+    private async Task<string> RecognizeMeterNumberFromImageAsync(byte[] imageData)
+    {
+        
+        using (var httpClient = new HttpClient())
+        {
+            var content = new ByteArrayContent(imageData);
+            content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+        
+            var response = await httpClient.PostAsync("https://your-microservice-url/recognize", content);
+            response.EnsureSuccessStatusCode();
+        
+            return await response.Content.ReadAsStringAsync();
+        }
+    }
+    
     
     
     

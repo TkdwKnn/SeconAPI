@@ -25,21 +25,52 @@ public class ExcelParser : IExcelParser
 
             var rows = worksheet.Dimension.Rows;
 
-            for (var row = 0; row < rows; row++)
+            for (var row = 10; row < rows; row++)
             {
-                var meterData = new MeterData()
+                
+                
+                var oldMeterData = new MeterData()
                 {
-                    City = worksheet.Cells[row, 3].GetValue<string>(),
-                    Street = worksheet.Cells[row, 4].GetValue<string>(),
-                    Apartment = worksheet.Cells[row, 5].GetValue<string>(),
-                    MeterType = worksheet.Cells[row, 12].GetValue<string>(),
-                    MeterNumber = worksheet.Cells[row, 13].GetValue<string>(),
+                    City = worksheet.Cells[row, 4].GetValue<string>(),
+                    Street = worksheet.Cells[row, 5].GetValue<string>(),
+                    Building = worksheet.Cells[row, 6].GetValue<string>(),
+                    Apartment = worksheet.Cells[row, 7].GetValue<string>(),
+                    MeterType = worksheet.Cells[row, 11].GetValue<string>(),
+                    MeterNumber = worksheet.Cells[row, 12].GetValue<string>(),
+                    IsNew = false,
                     IsMatched = false
                 };
 
-                meterDatas.Add(meterData);
-            }
+
+                var newMeterData = new MeterData()
+                {
+                    City = worksheet.Cells[row, 4].GetValue<string>(),
+                    Street = worksheet.Cells[row, 5].GetValue<string>(),
+                    Building = worksheet.Cells[row, 6].GetValue<string>(),
+                    Apartment = worksheet.Cells[row, 7].GetValue<string>(),
+                    MeterType = worksheet.Cells[row, 14].GetValue<string>(),
+                    MeterNumber = worksheet.Cells[row, 15].GetValue<string>(),
+                    IsNew = true,
+                    IsMatched = false
+                };
+
+                meterDatas.Add(oldMeterData);
+                meterDatas.Add(newMeterData);
+                
+            }   
         });
+        return meterDatas;
+    }
+
+    public async Task<List<MeterData>> GetMeterDataByDocumentAsync(List<byte[]> excelReport)
+    {
+        var meterDatas = new List<MeterData>();
+
+        foreach (var file in excelReport)
+        {
+            meterDatas.AddRange(await GetMeterDataByDocumentAsync(file));
+        }
+        
         return meterDatas;
     }
 }

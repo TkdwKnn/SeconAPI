@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Server.IISIntegration;
 using Microsoft.OpenApi.Models;
+using Minio;
 using OfficeOpenXml;
 using SeconAPI.Api.Filters;
 using SeconAPI.Application.Interfaces.Repositories;
@@ -10,6 +11,7 @@ using SeconAPI.Infrastructure.Data;
 using SeconAPI.Infrastructure.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
+ExcelPackage.License.SetNonCommercialOrganization("My Noncommercial organization");
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -40,6 +42,23 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
+
+builder.Services.AddSingleton<IMinioClient>(provider =>
+{
+    var configuration = provider.GetRequiredService<IConfiguration>();
+    var minioSettings = configuration.GetSection("MinioSettings");
+    
+    var endpoint = configuration["Minio:Endpoint"] ?? "localhost:9000";
+    var accessKey = configuration["Minio:AccessKey"] ?? "minioadmin";
+    var secretKey = configuration["Minio:SecretKey"] ?? "minioadmin";
+    var secure = bool.Parse(configuration["Minio:Secure"] ?? "false");
+    
+    return new MinioClient()
+        .WithEndpoint(endpoint)
+        .WithCredentials(accessKey, secretKey)
+        .WithSSL(secure)
+        .Build();
+});
 
 
 builder.Services.AddSingleton<DapperContext>();

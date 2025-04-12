@@ -8,6 +8,8 @@ public class MeterData
     public string? Apartment { get; set; }     
     public string? MeterType { get; set; }  
     public string? MeterNumber { get; set; }
+
+    public bool IsNew { get; set; }
     public bool IsMatched { get; set; } = false;
     
     
