@@ -43,6 +43,17 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+            .AllowAnyMethod()
+            .AllowAnyHeader();
+    });
+});
+
+
 builder.Services.AddSingleton<IMinioClient>(provider =>
 {
     var configuration = provider.GetRequiredService<IConfiguration>();
@@ -91,5 +102,7 @@ app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
 app.MapControllers();
+
+app.UseCors("AllowAll");
 
 app.Run();
