@@ -11,11 +11,14 @@ public class DocumentsController : ControllerBase
 {
     private readonly IDocumentService _documentService;
     private readonly IAuthService _authService;
+    private readonly IExcelParser _excelParser;
     
-    public DocumentsController(IDocumentService documentService, IAuthService authService)
+    
+    public DocumentsController(IDocumentService documentService, IAuthService authService, IExcelParser excelParser)
     {
         _documentService = documentService;
         _authService = authService;
+        _excelParser = excelParser;
     }
     
     [HttpPost("upload")]
@@ -131,4 +134,39 @@ public class DocumentsController : ControllerBase
             return BadRequest(new { message = ex.Message });
         }
     }
+    
+    [HttpPost]
+    public async Task<IActionResult> UploadFiles()
+    {
+        var files = Request.Form.Files;
+        var excelFile = files.FirstOrDefault(f => f.ContentType == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        var images = files.Where(f => f.ContentType.StartsWith("image/")).ToList();
+
+        if (excelFile == null)
+        {
+            return BadRequest("Excel-файл обязателен.");
+        }
+
+        byte[] excelData;
+        using (var memoryStream = new MemoryStream())
+        {
+            await excelFile.CopyToAsync(memoryStream);
+            excelData = memoryStream.ToArray();
+        }
+
+        var imageDataList = new List<byte[]>();
+        foreach (var image in images)
+        {
+            using (var memoryStream = new MemoryStream())
+            {
+                await image.CopyToAsync(memoryStream);
+                imageDataList.Add(memoryStream.ToArray());
+            }
+        }
+
+        var result = await _excelParser.GetMeterDataByDocumentAsync(excelData);
+
+        return Ok(result);
+    }
+    
 }

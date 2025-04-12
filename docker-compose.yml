@@ -8,7 +8,6 @@ services:
       - "5000:8080"
     depends_on:
       - db
-      - python_service
     environment:
       - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=secon_db;Username=postgres;Password=postgres;
       - PythonServiceUri=http://python_service:5001/process
@@ -22,11 +21,6 @@ services:
     volumes:
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
       - postgres_data:/var/lib/postgresql/data
-  python_service:
-    build:
-      context: ./python_service
-      dockerfile: Dockerfile
-    ports:
-      - "5001:5001"
+
 volumes:
   postgres_data:

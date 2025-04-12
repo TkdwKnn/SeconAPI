@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Server.IISIntegration;
 using Microsoft.OpenApi.Models;
+using OfficeOpenXml;
 using SeconAPI.Api.Filters;
 using SeconAPI.Application.Interfaces.Repositories;
 using SeconAPI.Application.Interfaces.Services;
@@ -41,8 +42,6 @@ builder.Services.AddSwaggerGen(c =>
 
 
 
-
-
 builder.Services.AddSingleton<DapperContext>();
 
 builder.Services.AddAuthentication("Custom")
@@ -56,6 +55,7 @@ builder.Services.AddScoped<ITokenRepository, TokenRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IDocumentService, DocumentService>();
+builder.Services.AddScoped<IExcelParser, ExcelParser>();
 
 var app = builder.Build();
 

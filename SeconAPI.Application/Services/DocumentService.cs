@@ -9,6 +9,7 @@ public class DocumentService : IDocumentService
     private readonly IDocumentRepository _documentRepository;
     private static readonly string? PythonServiceUri = Environment.GetEnvironmentVariable("PythonServiceUri") ?? "http://127.0.0.1:5000/process";
     
+    
     public DocumentService(IDocumentRepository documentRepository)
     {
         _documentRepository = documentRepository;
@@ -38,7 +39,12 @@ public class DocumentService : IDocumentService
         
         return await _documentRepository.AddDocumentAsync(document);
     }
-    
+
+    public Task<ProcessingTask> ProcessReportAsync(byte[] excelReport, List<byte[]> imageDataList)
+    {
+        throw new NotImplementedException();
+    }
+
     public async Task<Document> GetDocumentByIdAsync(int documentId)
     {
         return await _documentRepository.GetDocumentByIdAsync(documentId);
@@ -60,4 +66,7 @@ public class DocumentService : IDocumentService
     {
         await _documentRepository.DeleteDocumentAsync(documentId);
     }
+    
+    
+    
 }
