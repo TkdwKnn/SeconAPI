@@ -1,5 +1,4 @@
 CREATE DATABASE secon_db;
-
 \c secon_db;
 
 -- Create users table
@@ -35,11 +34,24 @@ CREATE TABLE IF NOT EXISTS documents (
     status VARCHAR(20) NOT NULL DEFAULT 'Pending'
 );
 
+-- Create processing_tasks table 
+CREATE TABLE IF NOT EXISTS processing_tasks (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    status VARCHAR(20) NOT NULL DEFAULT 'Pending',
+    error_message TEXT NULL,
+    original_excel_file_name VARCHAR(255) NULL,
+    result_archive_file_name VARCHAR(255) NULL,
+    working_directory VARCHAR(255) NULL
+);
+
 -- Create indexes
 CREATE INDEX idx_users_username ON users(username);
 CREATE INDEX idx_user_tokens_token ON user_tokens(token);
 CREATE INDEX idx_user_tokens_user_id ON user_tokens(user_id);
 CREATE INDEX idx_documents_user_id ON documents(user_id);
+CREATE INDEX idx_processing_tasks_user_id ON processing_tasks(user_id);
 
 -- Insert admin user (password: admin123)
 INSERT INTO users (username, email, password, password_salt, role)

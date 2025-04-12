@@ -169,4 +169,46 @@ public class DocumentsController : ControllerBase
         return Ok(result);
     }
     
+    
+    
+    [HttpPost("process")]
+    [UserAuthorize]
+    public async Task<IActionResult> ProcessTask()
+    {
+        var files = Request.Form.Files;
+        var excelFiles = files.Where(f => f.ContentType == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        var images = files.Where(f => f.ContentType.StartsWith("image/")).ToList();
+
+        if (excelFiles == null)
+        {
+            return BadRequest("Excel-файл обязателен.");
+        }
+
+        var excelData = new List<byte[]>();
+
+        foreach (var report in excelFiles)
+        {
+            using var memoryStream = new MemoryStream();
+            await report.CopyToAsync(memoryStream);
+            excelData.Add(memoryStream.ToArray());
+        }
+
+        var imageDataList = new List<byte[]>();
+        foreach (var image in images)
+        {
+            using var memoryStream = new MemoryStream();
+            await image.CopyToAsync(memoryStream);
+            imageDataList.Add(memoryStream.ToArray());
+        }
+
+        
+        var token = Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
+        var user = await _authService.GetUserFromTokenAsync(token);
+        
+        var result = await _documentService.ProcessReportAsync(user.Id, excelData, imageDataList);
+        
+        return Ok(result);
+    }
+    
+    
 }

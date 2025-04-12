@@ -17,8 +17,8 @@ public class ProcessingTaskRepository : IProcessingTaskRepository
     public async Task<int> CreateTaskAsync(ProcessingTask task)
     {
         var query = @"
-            INSERT INTO processing_tasks (user_id, created_at, status, error_message, original_excel_file_name, result_archive_file_name, working_directory)
-            VALUES (@UserId, @CreatedAt, @Status, @ErrorMessage, @OriginalExcelFileName, @ResultArchiveFileName, @WorkingDirectory)
+            INSERT INTO processing_tasks (user_id, created_at, status, error_message, result_archive_file_name)
+            VALUES (@UserId, @CreatedAt, @Status, @ErrorMessage, @ResultArchiveFileName)
             RETURNING id";
             
         using var connection = _context.CreateConnection();
@@ -48,9 +48,7 @@ public class ProcessingTaskRepository : IProcessingTaskRepository
             UPDATE processing_tasks
             SET status = @Status, 
                 error_message = @ErrorMessage, 
-                original_excel_file_name = @OriginalExcelFileName, 
-                result_archive_file_name = @ResultArchiveFileName,
-                working_directory = @WorkingDirectory
+                result_archive_file_name = @ResultArchiveFileName
             WHERE id = @Id";
             
         using var connection = _context.CreateConnection();

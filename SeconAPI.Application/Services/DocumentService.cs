@@ -1,5 +1,7 @@
 using System.IO.Compression;
 using System.Net.Http.Headers;
+using System.Text;
+using System.Text.Json;
 using SeconAPI.Application.Interfaces.Repositories;
 using SeconAPI.Application.Interfaces.Services;
 using SeconAPI.Domain.Entities;
@@ -56,7 +58,7 @@ public class DocumentService : IDocumentService
             Status  = "Pending"
         };
         
-        await _processingTaskRepository.CreateTaskAsync(task);
+        task.Id = await _processingTaskRepository.CreateTaskAsync(task);
 
         var meterDataList = await _excelParser.GetMeterDataByDocumentAsync(excelReport);
     
@@ -87,6 +89,7 @@ public class DocumentService : IDocumentService
         }
     
         var zipArchiveBytes = CreateZipArchive(processedImages);
+        
         
         
         Stream stream = new MemoryStream(zipArchiveBytes);
@@ -161,17 +164,21 @@ public class DocumentService : IDocumentService
     
     private async Task<string> RecognizeMeterNumberFromImageAsync(byte[] imageData)
     {
+        using var httpClient = new HttpClient();
+        string base64Image = Convert.ToBase64String(imageData);
         
-        using (var httpClient = new HttpClient())
+        var jsonRequest = new
         {
-            var content = new ByteArrayContent(imageData);
-            content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+            image = base64Image
+        };
+
+        var jsonContent = JsonSerializer.Serialize(jsonRequest);
+        var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
         
-            var response = await httpClient.PostAsync("https://your-microservice-url/recognize", content);
-            response.EnsureSuccessStatusCode();
+        var response = await httpClient.PostAsync("http://127.0.0.1:5000/recognize", content);
+        response.EnsureSuccessStatusCode();
         
-            return await response.Content.ReadAsStringAsync();
-        }
+        return await response.Content.ReadAsStringAsync();
     }
     
     

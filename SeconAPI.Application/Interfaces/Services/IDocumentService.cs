@@ -5,7 +5,6 @@ public interface IDocumentService
     Task<int> ProcessImageAsync(byte[] image, int userId);
     
     Task<ProcessingTask> ProcessReportAsync(int userId, List<byte[]> excelReport, List<byte[]> imageDataList);
-    
     Task<Document> GetDocumentByIdAsync(int documentId);
     
     Task<List<Document>> GetDocumentsByUserIdAsync(int userId);
