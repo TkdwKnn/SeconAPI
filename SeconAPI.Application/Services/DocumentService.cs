@@ -124,7 +124,7 @@ public class DocumentService : IDocumentService
     private async Task<List<string>> RecognizeMeterNumbersFromImagesAsync(List<byte[]> images)
     {
         using var client = new HttpClient();
-        client.Timeout = TimeSpan.FromSeconds(300);
+        client.Timeout = TimeSpan.FromSeconds(3000);
         var content = new MultipartFormDataContent();
 
         for (int i = 0; i < images.Count; i++)

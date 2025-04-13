@@ -8,11 +8,10 @@ services:
       - "5000:8080"
     depends_on:
       - db
-      - python_service
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=secon_db;Username=postgres;Password=postgres;
-      - PythonServiceUri=python_service:5001/batch-process
+      - PythonServiceUri=http://127.0.0.1:5001/batch-process
     networks:
       - secon-network
 
@@ -32,15 +31,17 @@ services:
       - secon-network
 
 
+   frontend:
+      container_name: frontend
+      build:
+        context: ./frontend
+        dockerfile : Dockerfile
+      ports:
+        - "80:5173"
+      networks:
+        - app_network
 
-  python_service:
-     build:
-       context: ./python_service
-       dockerfile: Dockerfile
-     ports:
-       - "5001:5001"
-     networks:
-       - secon-network	
+
 
   
 networks:
@@ -48,5 +49,4 @@ networks:
     driver: bridge
 
 volumes:
-  postgres_data:
-  minio_data:
+  postgres_data

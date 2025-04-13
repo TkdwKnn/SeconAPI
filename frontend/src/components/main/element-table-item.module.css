@@ -1,0 +1,8 @@
+.item:hover .deleteButton {
+    display: initial;
+}
+
+.deleteButton {
+    display: none;
+    width: 115px;
+}
