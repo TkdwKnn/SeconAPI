@@ -11,7 +11,7 @@ namespace SeconAPI.Application.Services;
 public class DocumentService : IDocumentService
 {
     private readonly IDocumentRepository _documentRepository;
-    private static readonly string? PythonServiceUri = Environment.GetEnvironmentVariable("PythonServiceUri") ?? "http://127.0.0.1:5000";
+    private static readonly string? PythonServiceUri = Environment.GetEnvironmentVariable("PythonServiceUri") ?? "http://185.251.91.226:6555";
     private readonly IProcessingTaskRepository _processingTaskRepository;
     private readonly IExcelParser _excelParser;
     private readonly IArchiveRepository _archiveRepository;
@@ -243,6 +243,10 @@ public class DocumentService : IDocumentService
     {
         return await _archiveRepository.GetArchiveByTaskIdAsync(taskId);
     }
-    
+
+    public async Task DeleteTaskAsync(int taskId)
+    {
+        await _processingTaskRepository.DeleteTaskAsync(taskId);
+    }
     
 }

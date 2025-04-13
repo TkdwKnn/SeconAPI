@@ -20,4 +20,7 @@ public interface IDocumentService
     Task<IEnumerable<ProcessingTask>> GetProcessingTasksByUserIdAsync(int userId);
 
 
+    Task DeleteTaskAsync(int taskId);
+    
+    
 }

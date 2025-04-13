@@ -314,5 +314,14 @@ public class DocumentsController : ControllerBase
             return StatusCode(500, $"Internal server error: {ex.Message}");
         }
     }
+    
+    
+    [HttpDelete("task/{taskId}")]
+    public async Task<IActionResult> DeleteTaskById(int taskId)
+    {
+
+        await _documentService.DeleteTaskAsync(taskId);
+        return NoContent();
+    }
 
 }
