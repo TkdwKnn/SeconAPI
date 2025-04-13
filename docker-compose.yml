@@ -11,12 +11,11 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=secon_db;Username=postgres;Password=postgres;
-      - PythonServiceUri=http://127.0.0.1:5001/batch-process
+      - PythonServiceUri=http://host.docker.internal:5001/batch-process
     networks:
       - secon-network
-
-
-
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
   db:
     image: postgres:14
     environment:
@@ -29,24 +28,18 @@ services:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - secon-network
-
-
-   frontend:
-      container_name: frontend
-      build:
-        context: ./frontend
-        dockerfile : Dockerfile
-      ports:
-        - "80:5173"
-      networks:
-        - app_network
-
-
-
+  frontend:
+    container_name: frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "80:5173"
+    networks:
+      - secon-network
   
 networks:
   secon-network:
     driver: bridge
-
 volumes:
-  postgres_data
+  postgres_data:
