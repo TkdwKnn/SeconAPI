@@ -54,8 +54,8 @@ const PageHistory = () => {
                 {selectedItems.length > 0
                     && <div className={"fixed left-[18px] bottom-[32px] " + styles.manageDown}>
                         <ButtonDefault onClick={handleOnDownloadClick} title={"Скачать"}
-                                       className={"bg-[#6540C5] text-white w-[169px] h-[54px] flex items-center justify-center rounded-[4px]"}/>
-                        <ButtonDefault onClick={handleDeleteClick} title={"Удалить"} className={"text-[#F12727]"}/>
+                                       className={"bg-[#6540C5] transition duration-150 hover:bg-[#8165c7] text-white w-[169px] h-[54px] flex items-center justify-center rounded-[4px]"}/>
+                        <ButtonDefault onClick={handleDeleteClick} title={"Удалить"} className={"text-[#F12727] w-[150px] flex justify-center transition duration-150 hover:text-red-400"}/>
                     </div>
                 }
             </div>

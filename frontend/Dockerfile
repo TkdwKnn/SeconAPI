@@ -3,6 +3,6 @@ EXPOSE 5173
 WORKDIR /appSource
 COPY package*.json ./
 RUN npm install --force && chmod -R +x node_modules/.bin
-RUN rm -rf node_modules/ && npm install && npm audit fix
+RUN rm -rf node_modules/ && npm install
 COPY . .
 CMD ["npm", "run", "dev", "--", "--host"]

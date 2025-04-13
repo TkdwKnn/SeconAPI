@@ -3,6 +3,7 @@ import ButtonDefault from "./button-default.tsx";
 import ElementTableItem from "./element-table-item.tsx";
 import {useAppDispatch} from "../../hooks.ts";
 import {deleteAll} from "../../redux/main.slice.ts";
+import {DeleteOutlined, MinusOutlined, SelectOutlined, StopOutlined} from "@ant-design/icons";
 
 interface ITable {
     title: string;
@@ -39,10 +40,10 @@ const BlockTable: FC<ITable> = ({items, title}) => {
                 <div className={"text-[24px] roboto font-[700]"}>{title}</div>
                 {isAllSelected
                     ? <div className={"flex gap-[18px]"}>
-                        <ButtonDefault onClick={handleDeselectAll} title={"Отменить выделение"} className={"text-[#6540C5]"}/>
-                        <ButtonDefault onClick={handleDeleteAll} title={"Удалить"} className={"text-[#F12727]"}/>
+                        <ButtonDefault onClick={handleDeselectAll} antDIcon={<StopOutlined className={"text-[18px]"}/>} title={"Отменить выделение"} className={"text-[#6540C5] gap-1"}/>
+                        <ButtonDefault onClick={handleDeleteAll} antDIcon={<DeleteOutlined className={"text-[18px]"}/>} title={"Удалить"} className={"text-[#F12727] gap-1"}/>
                     </div>
-                    : <ButtonDefault onClick={handleSelectAll} title={"Выделить всё"} className={"text-[#C126D9]"}/>
+                    : <ButtonDefault onClick={handleSelectAll} antDIcon={<SelectOutlined className={"text-[18px]"}/>} title={"Выделить всё"} className={"text-[#C126D9] gap-1"}/>
                 }
             </div>
             <div className={"border-t"}>

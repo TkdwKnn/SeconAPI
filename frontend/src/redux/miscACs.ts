@@ -8,7 +8,7 @@ import {
     myHistoryStart,
     myHistorySuccess
 } from "./misc.slice.ts";
-import {deleteHistoryItem} from "../api/misc";
+import {deleteAll, resetMain} from "./main.slice.ts";
 
 export const uploadFilesAC = (data: File[]) =>
     async (dispatch: Dispatch) => {
@@ -16,6 +16,7 @@ export const uploadFilesAC = (data: File[]) =>
             dispatch(documentProcessStart());
             const res = await api.misc.uploadFiles(data);
             dispatch(documentProcessSuccess(res.data.id));
+            dispatch(resetMain());
         } catch (e: any) {
             console.error(e);
             dispatch(documentProcessFailure(e.message));
@@ -37,7 +38,7 @@ export const getHistoryAC = () =>
 export const deleteHistoryItemAC = (ids: number[]) =>
     async (dispatch: Dispatch) => {
         try {
-            const res = await api.misc.deleteHistoryItem(ids);
+            await api.misc.deleteHistoryItem(ids);
             dispatch(deleteHistoryItemLocal(ids));
         } catch (e: any) {
             console.error(e);

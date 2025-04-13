@@ -1,4 +1,4 @@
-import {Button, Input} from "antd";
+import {Button} from "antd";
 import BaseAuth from "../components/common/base-auth.tsx";
 import {useNavigate} from "react-router";
 import {FC} from "react";

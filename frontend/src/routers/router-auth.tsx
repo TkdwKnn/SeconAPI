@@ -1,7 +1,6 @@
 import {Route, Routes} from "react-router";
 import {FC} from "react";
 import PageLogin from "../pages/page-login.tsx";
-import PageRegister from "../pages/page-register.tsx";
 
 export interface IRouter {
     sourceDir: string;

@@ -1,6 +1,6 @@
 import {FC} from "react";
 import {IRouter} from "./router-auth.tsx";
-import {Route, Routes, useNavigate} from "react-router";
+import {Route, Routes} from "react-router";
 import PageUpload from "../pages/page-upload.tsx";
 import Redirector from "../components/common/redirector.tsx";
 import PageHistory from "../pages/page-history.tsx";

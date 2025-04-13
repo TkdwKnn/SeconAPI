@@ -1,6 +1,5 @@
 import BaseAuth from "../components/common/base-auth.tsx";
 import {Button} from "antd";
-import {useNavigate} from "react-router";
 import {FC, useState} from "react";
 import {IRouter} from "../routers/router-auth.tsx";
 import InputAuth from "../components/auth/input-auth.tsx";
@@ -12,8 +11,8 @@ import {loginUser} from "../redux/authACs.ts";
 const PageLogin: FC<IRouter> = ({sourceDir}) => {
     const dispatch = useAppDispatch();
 
-    if (localStorage.getItem("token") !== "" || localStorage.getItem("token")) window.location.href = "/history"
-
+    /*if (localStorage.getItem("token") !== "" || localStorage.getItem("token")) window.location.href = "/history"
+*/
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
 
