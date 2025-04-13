@@ -74,7 +74,6 @@ builder.Services.AddSingleton<IMinioClient>(provider =>
 
 
 builder.Services.AddScoped<IProcessingTaskRepository, ProcessingTaskRepository>();
-builder.Services.AddScoped<IStorageService, MinioStorageService>();
 
 builder.Services.AddSingleton<DapperContext>();
 

@@ -16,7 +16,7 @@ public class DocumentService : IDocumentService
     private readonly IExcelParser _excelParser;
     private readonly IArchiveRepository _archiveRepository;
     
-    public DocumentService(IDocumentRepository documentRepository, IExcelParser excelParser, IProcessingTaskRepository processingTaskRepository, IStorageService storageService, IArchiveRepository archiveRepository)
+    public DocumentService(IDocumentRepository documentRepository, IExcelParser excelParser, IProcessingTaskRepository processingTaskRepository, IArchiveRepository archiveRepository)
     {
         _documentRepository = documentRepository;
         _excelParser = excelParser;
@@ -124,6 +124,7 @@ public class DocumentService : IDocumentService
     private async Task<List<string>> RecognizeMeterNumbersFromImagesAsync(List<byte[]> images)
     {
         using var client = new HttpClient();
+        client.Timeout = TimeSpan.FromSeconds(300);
         var content = new MultipartFormDataContent();
 
         for (int i = 0; i < images.Count; i++)
@@ -248,5 +249,9 @@ public class DocumentService : IDocumentService
     {
         await _processingTaskRepository.DeleteTaskAsync(taskId);
     }
+    
+    
+    
+    
     
 }

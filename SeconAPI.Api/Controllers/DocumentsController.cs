@@ -316,12 +316,24 @@ public class DocumentsController : ControllerBase
     }
     
     
-    [HttpDelete("task/{taskId}")]
-    public async Task<IActionResult> DeleteTaskById(int taskId)
+    [HttpDelete("task/{taskIds}")]
+    public async Task<IActionResult> DeleteTaskById(string taskIds)
     {
+        
+        var taskIdArray = taskIds.Split(',')
+            .Select(id => int.TryParse(id.Trim(), out int parsedId) ? parsedId : -1)
+            .Where(id => id != -1)
+            .ToArray();
 
-        await _documentService.DeleteTaskAsync(taskId);
+        foreach (var taskId in taskIdArray)
+        {
+            await _documentService.DeleteTaskAsync(taskId);
+        }
+
         return NoContent();
     }
+    
+    
+    
 
 }
