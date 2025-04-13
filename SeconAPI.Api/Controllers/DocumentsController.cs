@@ -1,3 +1,4 @@
+using System.IO.Compression;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SeconAPI.Api.Contracts;
@@ -264,5 +265,54 @@ public class DocumentsController : ControllerBase
     }
 
 
+    [HttpGet("task/download/{taskIds}")]
+    public async Task<IActionResult> GetTasksByIds(string taskIds)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(taskIds))
+                return BadRequest("No task IDs provided");
+
+            var taskIdArray = taskIds.Split(',')
+                .Select(id => int.TryParse(id.Trim(), out int parsedId) ? parsedId : -1)
+                .Where(id => id != -1)
+                .ToArray();
+
+            if (taskIdArray.Length == 0)
+                return BadRequest("Invalid task IDs format");
+
+            using (var memoryStream = new MemoryStream())
+            {
+                using (var archive = new ZipArchive(memoryStream, ZipArchiveMode.Create, true))
+                {
+                    foreach (var taskId in taskIdArray)
+                    {
+                        var taskArchiveBytes = await _documentService.DownloadArchiveByTaskIdAsync(taskId);
+                        
+                        if (taskArchiveBytes != null && taskArchiveBytes.Length > 0)
+                        {
+                            var entryName = $"task_{taskId}_archive.zip";
+                            var entry = archive.CreateEntry(entryName);
+                            
+                            using (var entryStream = entry.Open())
+                            using (var fileStream = new MemoryStream(taskArchiveBytes))
+                            {
+                                await fileStream.CopyToAsync(entryStream);
+                            }
+                        }
+                    }
+                }
+
+                if (memoryStream.Length == 0)
+                    return NotFound("Archives not found for any of the provided tasks");
+
+                return File(memoryStream.ToArray(), "application/zip", $"tasks_{taskIds.Replace(",", "_")}_archive.zip");
+            }
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"Internal server error: {ex.Message}");
+        }
+    }
 
 }

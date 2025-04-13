@@ -12,7 +12,7 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=secon_db;Username=postgres;Password=postgres;
-      - PythonServiceUri=http://python_service:5001/process
+      - PythonServiceUri=python_service:5001/batch-process
     networks:
       - secon-network
 
@@ -39,6 +39,8 @@ services:
        dockerfile: Dockerfile
      ports:
        - "5001:5001"
+     networks:
+       - secon-network	
 
   
 networks:
